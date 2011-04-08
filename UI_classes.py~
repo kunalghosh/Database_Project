@@ -1,0 +1,123 @@
+from front_end_files.dbmsUI import *
+from front_end_files.View_contentsUI import *
+from front_end_files.AddStudent import *
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from DB.pracTT_Db import *
+from string import Template
+
+stud_db=practicalDB('DB/pracTT')
+insert_student_details_template=Template('insert into student_details values (\'$usn\',\'$name\',$sem,$elig);')
+insert_student_with_arrears_template=Template('insert into studs_with_arrears values (\'$usn\',\'$subject_code\');')
+class AddStudent_Interface(QtGui.QDialog):
+        """
+
+        """
+        def __init__(self,parent=None):
+        	""""""
+            	QtGui.QDialog.__init__(self,parent)
+  	        self.ui = Ui_Dialog()
+            	self.ui.setupUi(self)
+            	QtCore.QObject.connect(self.ui.add_pushButton,QtCore.SIGNAL("clicked()"),self.add_student_to_DB)
+
+	def clear_AddStudent_texts(self):
+		self.ui.usn_lineEdit.clear()
+		self.ui.name_lineEdit.clear()
+		self.ui.semester_lineEdit.clear()
+		self.ui.arrear1_lineEdit.clear()
+		self.ui.arrear2_lineEdit.clear()
+		self.ui.arrear3_lineEdit.clear()
+		self.ui.arrear4_lineEdit.clear()
+		self.ui.arrear5_lineEdit.clear()
+		#uncheck the two check boxes
+		self.ui.eligible_checkBox.setCheckState(0)
+		self.ui.hasArrears_checkBox.setCheckState(0)
+        def add_student_to_DB(self):
+             	"""
+		Collect all the relevant fields' values and call the
+            	sql function to insert
+            	"""
+	        self.stud_name=self.ui.name_lineEdit.text().toAscii()
+            	self.stud_usn=self.ui.usn_lineEdit.text().toAscii()
+            	self.stud_sem=self.ui.semester_lineEdit.text()
+            	self.stud_elig=self.ui.eligible_checkBox.checkState()
+            	if self.stud_elig == 0:
+                	self.stud_elig_stat=0
+            	else:
+                	self.stud_elig_stat=1
+	    	self.stud_arrear=[]#Creating a list of all the arrears
+	    	arr=self.ui.arrear1_lineEdit.text().toAscii()
+	    	if(arr):
+			self.stud_arrear.append(arr)
+	    	arr=self.ui.arrear2_lineEdit.text().toAscii()
+	    	if(arr):                  	    
+    			self.stud_arrear.append(arr)
+	    	arr=self.ui.arrear3_lineEdit.text().toAscii()
+	    	if(arr):
+			self.stud_arrear.append(arr)
+	    	arr=self.ui.arrear4_lineEdit.text().toAscii()
+	    	if(arr):
+	 		self.stud_arrear.append(arr)
+	    	arr=self.ui.arrear5_lineEdit.text().toAscii()
+	    	if(arr):
+			self.stud_arrear.append(arr)
+	    	#print self.stud_arrear
+	    	#list of student's arrears in self.sutd_arrear 
+	    	ins_2_stud_details_command=insert_student_details_template.substitute(usn=self.stud_usn,name=self.stud_name,sem=self.stud_sem,elig=self.stud_elig_stat)
+		#ins_2_stud_details_command="insert into student_details values(\""+self.stud_usn+"\",\""+self.stud_name+"\","+self.stud_sem+","+self.stud_elig_stat+");"
+            	result=stud_db.execute(ins_2_stud_details_command)
+		if result==0:
+			for arrear_code in self.stud_arrear:
+		        	ins_2_studs_with_arrears_command=insert_student_with_arrears_template.substitute(usn=self.stud_usn,subject_code=arrear_code)
+				result=stud_db.execute(ins_2_studs_with_arrears_command)
+				if result==1:
+					break
+	            	#print self.stud_elig
+			if result==0:
+	        	    	msgBox=QMessageBox()
+	            		msgBox.information(self, "Addition Message", "Student "+self.stud_name+" has been added to the Database")
+				self.clear_AddStudent_texts()
+
+class Report_Interface(QtGui.QDialog):
+        """
+
+        """
+        def __init__(self,parent=None):
+         	QtGui.QDialog.__init__(self,parent)
+            	self.ui = Ui_FormReport()
+            	self.ui.setupUi(self)
+
+class Main_Interface(QtGui.QTabWidget):
+        '''This Class initialises the main window of The Practical Time Table Management Portal
+        It has 2 methods
+        __init__ as the initializer
+        file_dialog has the code to call the file chooser  when Upload button is clicked
+        '''
+        def __init__(self, parent=None):
+        	QtGui.QWidget.__init__(self, parent)
+            	self.ui = Ui_TabWidget()
+            	self.ui.setupUi(self)
+            	QtCore.QObject.connect(self.ui.upload_pushButton,QtCore.SIGNAL("clicked()"), self.file_dialog)
+            	QtCore.QObject.connect(self.ui.addStudent_pushButton,QtCore.SIGNAL("clicked()"),self.invoke_add_stud_interface)
+            	QtCore.QObject.connect(self.ui.view_pushButton,QtCore.SIGNAL("clicked()"),self.invoke_view_interface)
+        def invoke_view_interface(self):
+		view_ui=Report_Interface()
+		view_ui.show()
+        def invoke_add_stud_interface(self):
+            	'''method to invoke the AddStudent_Interface the moment the addstudent_pushButton
+            	is clicked.'''
+            	a=AddStudent_Interface(self)
+            	a.show()
+        def file_dialog(self):
+            	'''This method calls the QFileDialog with self as the argument to
+            	invoke the File Chooser . If the choosen object is a file then
+                it is assigned to the uploadFile_LineEdit widget else its not'''       		
+            	a = 0
+            	while(not a):
+                	fd=QtGui.QFileDialog(self)
+                	fname=fd.getOpenFileName()
+                	from os.path import isfile
+                	a=isfile(fname)
+            	if isfile(fname):
+                	self.filename=fd
+                	self.ui.uploadFile_LineEdit.setText(fname)

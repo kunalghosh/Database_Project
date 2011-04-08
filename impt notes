@@ -1,0 +1,4 @@
+2 same usns in the table
+SQL error: column USN is not unique
+
+sqlite3.IntegrityError: column USN is not unique

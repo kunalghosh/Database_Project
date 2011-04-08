@@ -1,0 +1,2 @@
+in View_ContentsUI
+	the columns' width must auto resize as we resize the widget OR the columns must auto scale
