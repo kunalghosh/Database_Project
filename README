@@ -1,0 +1,7 @@
+This is a small database project I had done as a part of my coursework.
+It uses PyQt for the Front-End, Python at the backend and Sqlite as the
+database of choice.
+
+I had chosen Sqlite because:
+1. Python has native support for Sqlite.
+2. Sqlite is very portable.(Portability was a requirement for the project at hand.)
